@@ -1,3 +1,6 @@
+```
+https://docs.linuxserver.io/general/container-customization/
+```
 Đọc đoạn văn này, chúng ta có thể cảm nhận rất rõ **tâm tư vừa tự hào, vừa có chút quá tải và mệt mỏi, nhưng lại đầy trách nhiệm** của đội ngũ phát triển LinuxServer.io.
 
 Họ đang tâm sự như những người làm dâu trăm họ, đối mặt với bài toán kinh điển của thế giới mã nguồn mở: **Làm sao để cân bằng giữa sự ổn định của hệ thống và nhu cầu cá nhân hóa vô tận của người dùng.**
