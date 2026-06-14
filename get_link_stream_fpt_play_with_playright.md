@@ -1,3 +1,37 @@
+
+
+### Giải pháp 2: Dùng Python + Playwright / Selenium viết công cụ cào (Chuẩn chỉnh và bảo mật nhất)
+
+Cách này hoạt động độc lập bằng một Container Docker nhỏ chạy ngầm (hoặc chạy qua Cronjob mỗi 1-2 ngày). Do FPT Play có cơ chế chống bot và yêu cầu login, dùng Python Playwright có chế độ giả lập người dùng (Stealth) là tối ưu nhất.
+
+Kịch bản của đoạn script Python sẽ như sau:
+
+1. **Khởi tạo:** Mở một trình duyệt Chrome ngầm (Headless Chrome).
+2. **Nạp Session:** Sử dụng lại file `cookies.json` (bạn export từ Chrome trên máy tính sau khi login thành công) để không phải giải captcha hay kích hoạt OTP mỗi lần chạy.
+3. **Truy cập:** Đi thẳng vào link `https://fptplay.vn/xem-truyen-hinh/vtv6-hd`.
+4. **Bắt gói tin:** Playwright có tính năng lắng nghe mạng ngầm (`page.on("request", ...)`). Script sẽ đợi trang web load, ngay khi thấy request nào có chứa chữ `vips-livecdn.fptplay.net` và kết thúc bằng `.m3u8?token=`, nó sẽ lập tức "tóm" lấy cái URL này.
+5. **Cập nhật cho TVHeadend:** * Thay vì thay đổi trực tiếp trong DB của TVHeadend rất phức tạp, bạn hãy cấu hình TVHeadend đọc kênh thông qua một **Local M3U Playlist** (Ví dụ: đặt tại `/var/lib/tvheadend/fptplay.m3u`).
+- Script Python sau khi lấy được link mới sẽ ghi đè vào file `fptplay.m3u` này. TVHeadend sẽ tự động cập nhật luồng phát mà không cần restart.
+
+### Kiến trúc tối ưu để TVHeadend không bao giờ bị ngắt quãng:
+
+Thay vì bắt TVHeadend đọc trực tiếp link FPT Play, cấu hình chuẩn sẽ như sau:
+
+```
+[FPT Play Web]
+│ (Playwright Script cào token mỗi 24h)
+▼
+[File local /var/lib/tvheadend/fptplay.m3u]
+│
+▼
+[TVHeadend IPTV Automatic Network] ──> [Đầu ra cho các thiết bị]
+
+```
+
+Bằng cách này, TVHeadend chỉ nhìn thấy một file playlist tĩnh nằm ngay trên ổ cứng của Ubuntu Host. Khi token hết hạn, script ngầm sẽ tự động thay ruột file playlist đó, TVHeadend của bạn sẽ luôn có link "tươi" để chạy 24/7.
+
+Bạn thấy hướng tiếp cận nào phù hợp với tài nguyên hiện tại của bạn hơn? Tôi có thể giúp bạn triển khai chi tiết từng bước cho phương án đó.
+---
 Giải pháp 2 hoàn toàn có thể đóng gói gọn gàng thành một Docker image và đây cũng là cách làm chuẩn nhất. Tuy nhiên, vì đây là một kịch bản tùy biến riêng cho FPT Play, hiện **không có image chính thức (official)** có sẵn trên Docker Hub mà bạn chỉ cần kéo về là chạy ngay.
 
 Thay vào đó, bạn sẽ dùng một **Base Image có sẵn Python + Playwright** (do Microsoft cung cấp), sau đó thêm file script Python của bạn vào.
